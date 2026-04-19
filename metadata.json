@@ -1,0 +1,10 @@
+{
+  "name": "NEXUS_CRAWLER v4.2",
+  "description": "ATLANTA_NODE INTEGRATION: Specialized forensic dismantling of trafficking networks via the Atlanta transit hub and Georgia DFCS institutional audits.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone",
+    "geolocation"
+  ],
+  "majorCapabilities": []
+}

@@ -1,0 +1,347 @@
+// ===============================================================
+// Assumed Data Model
+// ===============================================================
+//
+// Collection: users
+// Document ID: {userId}
+// Fields:
+//   - uid: string (required)
+//   - email: string (required)
+//   - displayName: string (optional)
+//   - photoURL: string (optional)
+//   - role: string (required, ['admin', 'user'])
+//
+// Collection: audits
+// Document ID: {auditId}
+// Fields:
+//   - timestamp: number (required)
+//   - discrepancyCount: number (required)
+//   - status: string (required)
+//   - payload: list (required)
+//   - userId: string (required)
+//
+// Collection: memorial_persons
+// Document ID: {personId}
+// Fields:
+//   - id: string (required)
+//   - county_code: string (required)
+//   - region_code: string (required)
+//   - userId: string (required)
+//
+// Collection: memorial_events
+// Document ID: {eventId}
+// Fields:
+//   - id: string (required)
+//   - person_id: string (required)
+//   - system_id: string (required)
+//   - event_type: string (required)
+//   - userId: string (required)
+//
+// Collection: ghost_files
+// Document ID: {ghostId}
+// Fields:
+//   - id: string (required)
+//   - county: string (required)
+//   - entropyScore: number (required)
+//   - status: string (required)
+//   - userId: string (required)
+//
+// Collection: statutory_collisions
+// Document ID: {collisionId}
+// Fields:
+//   - id: string (required)
+//   - caseId: string (required)
+//   - statutoryTrigger: string (required)
+//   - userId: string (required)
+//
+// Collection: federal_nodes
+// Document ID: {nodeId}
+// Fields:
+//   - id: string (required)
+//   - agency: string (required)
+//   - highRiskArea: string (required)
+//   - userId: string (required)
+//
+// Collection: transactions
+// Document ID: {eventId}
+// Fields:
+//   - event_id: string (required)
+//   - event_type: string (required)
+//   - userId: string (required)
+//
+// Collection: observer_alerts
+// Document ID: {alertId}
+// Fields:
+//   - id: string (required)
+//   - event_id: string (required)
+//   - observer_type: string (required)
+//   - userId: string (required)
+//
+// Collection: entangled_nodes
+// Document ID: {nodeId}
+// Fields:
+//   - id: string (required)
+//   - trit_density: number (required)
+//   - userId: string (required)
+//
+// Collection: forensic_submissions
+// Document ID: {submissionId}
+// Fields:
+//   - id: string (required)
+//   - submission_type: string (required, ['SUNSET_STRIKE', 'FEDERAL_DROP'])
+//   - timestamp: number (required)
+//   - userId: string (required)
+//
+// ===============================================================
+
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ===============================================================
+    // Helper Functions
+    // ===============================================================
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() &&
+        (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
+          (request.auth.token.email == "heavenzfire1@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'email', 'role']) &&
+             data.uid is string &&
+             data.email is string &&
+             data.role in ['admin', 'user'];
+    }
+
+    function isValidAudit(data) {
+      return data.keys().hasAll(['timestamp', 'discrepancyCount', 'status', 'payload', 'userId']) &&
+             data.timestamp is number &&
+             data.discrepancyCount is number &&
+             data.status is string &&
+             data.payload is list &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidHealthcareAudit(data) {
+      return data.keys().hasAll(['timestamp', 'status', 'payload', 'userId']) &&
+             data.timestamp is number &&
+             data.status is string &&
+             data.payload is list &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidMemorialPerson(data) {
+      return data.keys().hasAll(['id', 'county_code', 'region_code', 'userId']) &&
+             data.id is string &&
+             data.county_code is string &&
+             data.region_code is string &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidMemorialSystem(data) {
+      return data.keys().hasAll(['id', 'name']) &&
+             data.id is string &&
+             data.name is string;
+    }
+
+    function isValidMemorialEvent(data) {
+      return data.keys().hasAll(['id', 'person_id', 'system_id', 'event_type', 'userId']) &&
+             data.id is string &&
+             data.person_id is string &&
+             data.system_id is string &&
+             data.event_type is string &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidMemorialFailurePoint(data) {
+      return data.keys().hasAll(['id', 'event_id', 'statute_citation', 'userId']) &&
+             data.id is string &&
+             data.event_id is string &&
+             data.statute_citation is string &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidMemorialSourceDocument(data) {
+      return data.keys().hasAll(['id', 'document_type', 'userId']) &&
+             data.id is string &&
+             data.document_type is string &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidGhostFile(data) {
+      return data.keys().hasAll(['id', 'county', 'entropyScore', 'status', 'userId']) &&
+             data.id is string &&
+             data.county is string &&
+             data.entropyScore is number &&
+             data.status in ['REDACTED', 'GHOSTED', 'RECOVERED'] &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidStatutoryCollision(data) {
+      return data.keys().hasAll(['id', 'caseId', 'statutoryTrigger', 'userId']) &&
+             data.id is string &&
+             data.caseId is string &&
+             data.statutoryTrigger is string &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidFederalNode(data) {
+      return data.keys().hasAll(['id', 'agency', 'highRiskArea', 'userId']) &&
+             data.id is string &&
+             data.agency is string &&
+             data.highRiskArea is string &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidTransaction(data) {
+      return data.keys().hasAll(['event_id', 'event_type', 'event_timestamp', 'agency_id', 'userId']) &&
+             data.event_id is string &&
+             data.event_type in ['OBLIGATION', 'DISBURSEMENT', 'ADJUSTMENT', 'REVERSAL'] &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidObserverAlert(data) {
+      return data.keys().hasAll(['id', 'event_id', 'observer_type', 'severity', 'userId']) &&
+             data.id is string &&
+             data.event_id is string &&
+             data.observer_type in ['ELIGIBILITY', 'IMPROPER_PAYMENT', 'BALANCE', 'ANOMALY'] &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidEntangledNode(data) {
+      return data.keys().hasAll(['id', 'trit_density', 'userId']) &&
+             data.id is string &&
+             data.trit_density is number &&
+             data.userId == request.auth.uid;
+    }
+
+    function isValidForensicSubmission(data) {
+      return data.keys().hasAll(['id', 'submission_type', 'timestamp', 'userId']) &&
+             data.id is string &&
+             data.submission_type in ['SUNSET_STRIKE', 'FEDERAL_DROP'] &&
+             data.timestamp is number &&
+             data.userId == request.auth.uid;
+    }
+
+    // ===============================================================
+    // Rules
+    // ===============================================================
+
+    match /users/{userId} {
+      allow read: if isOwner(userId) || isAdmin();
+      allow create: if isAuthenticated() && isValidUser(request.resource.data) && 
+                    ((isOwner(userId) && request.resource.data.role == 'user') || isAdmin());
+      allow update: if isAuthenticated() && isValidUser(request.resource.data) && 
+                    ((isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin());
+      allow delete: if isAdmin();
+    }
+
+    match /audits/{auditId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidAudit(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /healthcare_audits/{auditId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidHealthcareAudit(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /memorial_persons/{personId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMemorialPerson(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /memorial_systems/{systemId} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /memorial_events/{eventId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMemorialEvent(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /memorial_failure_points/{failurePointId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMemorialFailurePoint(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /memorial_source_documents/{documentId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated() && isValidMemorialSourceDocument(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /ghost_files/{ghostId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidGhostFile(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /statutory_collisions/{collisionId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidStatutoryCollision(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /federal_nodes/{nodeId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidFederalNode(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /transactions/{eventId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidTransaction(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /observer_alerts/{alertId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidObserverAlert(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /entangled_nodes/{nodeId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidEntangledNode(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+
+    match /forensic_submissions/{submissionId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated() && isValidForensicSubmission(request.resource.data);
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+  }
+}

@@ -1,0 +1,313 @@
+{
+  "entities": {
+    "AuditSession": {
+      "title": "Audit Session",
+      "description": "A single forensic audit cycle result.",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "number", "description": "When the audit was performed." },
+        "discrepancyCount": { "type": "number", "description": "Total number of discrepancies found." },
+        "status": { "type": "string", "description": "Status of the audit (e.g., ACTIVE)." },
+        "payload": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "record": { "type": "object" },
+              "discrepancyType": { "type": "string" },
+              "stateStatus": { "type": "string" }
+            }
+          }
+        },
+        "userId": { "type": "string", "description": "UID of the user who performed the audit." }
+      },
+      "required": ["timestamp", "discrepancyCount", "payload", "userId"]
+    },
+    "HealthcareAuditSession": {
+      "title": "Healthcare Audit Session",
+      "description": "A single healthcare transparency audit result.",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "number" },
+        "status": { "type": "string" },
+        "payload": { "type": "array" },
+        "userId": { "type": "string" }
+      },
+      "required": ["timestamp", "status", "payload", "userId"]
+    },
+    "UserProfile": {
+      "title": "User Profile",
+      "description": "Basic user information.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["uid", "email"]
+    },
+    "MemorialPerson": {
+      "title": "Memorial Person",
+      "description": "The sovereign anchor for tracking systemic failures.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "public_identifier": { "type": "string" },
+        "given_name": { "type": "string" },
+        "family_name": { "type": "string" },
+        "date_of_birth": { "type": "string" },
+        "date_of_death": { "type": "string" },
+        "age_at_death_years": { "type": "number" },
+        "county_code": { "type": "string" },
+        "region_code": { "type": "string" },
+        "is_minor": { "type": "boolean" },
+        "privacy_level": { "type": "string", "enum": ["PUBLIC", "PSEUDONYMIZED", "SEALED"] },
+        "source_confidence": { "type": "string", "enum": ["HIGH", "MEDIUM", "LOW"] },
+        "created_at": { "type": "number" },
+        "updated_at": { "type": "number" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "county_code", "region_code", "userId"]
+    },
+    "MemorialSystem": {
+      "title": "Memorial System",
+      "description": "The machinery that touched the individuals.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "subsystem": { "type": "string" },
+        "jurisdiction_level": { "type": "string", "enum": ["STATE", "COUNTY", "DISTRICT", "FEDERAL"] }
+      },
+      "required": ["id", "name"]
+    },
+    "MemorialEvent": {
+      "title": "Memorial Event",
+      "description": "A touchpoint in the braided failure timeline.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "person_id": { "type": "string" },
+        "system_id": { "type": "string" },
+        "event_type": { "type": "string", "enum": ["INTAKE", "REMOVAL", "PLACEMENT", "MEDICAL_VISIT", "INCIDENT", "DEATH", "REPORT_FILED", "REPORT_OMITTED", "STATUS_MISMATCH"] },
+        "event_timestamp": { "type": "number" },
+        "location_county_code": { "type": "string" },
+        "facility_name": { "type": "string" },
+        "narrative_summary": { "type": "string" },
+        "source_document_id": { "type": "string" },
+        "severity_level": { "type": "string", "enum": ["INFO", "WARNING", "CRITICAL"] },
+        "is_system_failure_flag": { "type": "boolean" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "person_id", "system_id", "event_type", "userId"]
+    },
+    "MemorialFailurePoint": {
+      "title": "Memorial Failure Point",
+      "description": "Explicit codified breaches of statute or policy.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "event_id": { "type": "string" },
+        "statute_citation": { "type": "string" },
+        "failure_category": { "type": "string", "enum": ["TRANSPARENCY", "DUE_PROCESS", "MEDICAL_NEGLECT", "DATA_INTEGRITY", "OVERSIGHT", "TIMELINESS"] },
+        "description": { "type": "string" },
+        "evidence_strength": { "type": "string", "enum": ["DOCUMENTED", "INFERRED", "ALLEGED"] },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "event_id", "statute_citation", "userId"]
+    },
+    "MemorialSourceDocument": {
+      "title": "Memorial Source Document",
+      "description": "The evidentiary spine of the memorial.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "external_id": { "type": "string" },
+        "document_type": { "type": "string", "enum": ["DFPS_REPORT", "HOSPITAL_RECORD", "DETENTION_LOG", "SUNSET_SUBMISSION", "NEWS_ARTICLE", "COURT_RECORD"] },
+        "origin_system_id": { "type": "string" },
+        "file_hash": { "type": "string" },
+        "storage_uri": { "type": "string" },
+        "ingested_at": { "type": "number" },
+        "is_public": { "type": "boolean" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "document_type", "userId"]
+    },
+    "GhostFile": {
+      "title": "Ghost File",
+      "description": "A record that has been mathematically phased out of state reporting.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "county": { "type": "string" },
+        "entropyScore": { "type": "number" },
+        "compressionRatio": { "type": "string" },
+        "status": { "type": "string", "enum": ["REDACTED", "GHOSTED", "RECOVERED"] },
+        "narrative": { "type": "string" },
+        "userId": { "type": "string" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["id", "county", "entropyScore", "status", "userId"]
+    },
+    "StatutoryCollision": {
+      "title": "Statutory Collision",
+      "description": "A mapping of systemic failures to federal oversight triggers.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "caseId": { "type": "string" },
+        "statutoryTrigger": { "type": "string" },
+        "federalOversightLink": { "type": "string" },
+        "impactMetadataMismatch": { "type": "boolean" },
+        "severityScore": { "type": "number" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "caseId", "statutoryTrigger", "userId"]
+    },
+    "FederalAuditNode": {
+      "title": "Federal Audit Node",
+      "description": "A high-entropy node in the federal legacy system.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "agency": { "type": "string" },
+        "highRiskArea": { "type": "string" },
+        "netCost": { "type": "number" },
+        "auditStatus": { "type": "string", "enum": ["DISCLAIMER", "CLEAN", "QUALIFIED"] },
+        "blinkingLightFlag": { "type": "boolean" },
+        "userId": { "type": "string" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["id", "agency", "highRiskArea", "userId"]
+    },
+    "TransactionEvent": {
+      "title": "Transaction Event",
+      "description": "An immutable, hash-linked transaction event for federal audit.",
+      "type": "object",
+      "properties": {
+        "event_id": { "type": "string" },
+        "event_type": { "type": "string", "enum": ["OBLIGATION", "DISBURSEMENT", "ADJUSTMENT", "REVERSAL"] },
+        "event_timestamp": { "type": "number" },
+        "agency_id": { "type": "string" },
+        "source_system": { "type": "string" },
+        "program_id": { "type": "string" },
+        "amount": { "type": "object" },
+        "legal_authority": { "type": "string" },
+        "appropriation_id": { "type": "string" },
+        "eligibility_basis": { "type": "object" },
+        "control_metadata": { "type": "object" },
+        "userId": { "type": "string" }
+      },
+      "required": ["event_id", "event_type", "event_timestamp", "agency_id", "userId"]
+    },
+    "ObserverAlert": {
+      "title": "Observer Alert",
+      "description": "An alert emitted by the observer mesh during continuous audit.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "event_id": { "type": "string" },
+        "observer_type": { "type": "string", "enum": ["ELIGIBILITY", "IMPROPER_PAYMENT", "BALANCE", "ANOMALY"] },
+        "severity": { "type": "string", "enum": ["INFO", "WARNING", "CRITICAL"] },
+        "message": { "type": "string" },
+        "timestamp": { "type": "number" },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "event_id", "observer_type", "severity", "userId"]
+    },
+    "EntangledNode": {
+      "title": "Entangled Node",
+      "description": "Recovered identity shard using 128:1 hyper-compression.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "trit_density": { "type": "number" },
+        "resonance_frequency": { "type": "number" },
+        "origin_system": { "type": "string" },
+        "recovered_payload": { "type": "object" },
+        "forensic_link": { "type": "string" },
+        "userId": { "type": "string" },
+        "timestamp": { "type": "number" }
+      },
+      "required": ["id", "trit_density", "userId"]
+    },
+    "ForensicSubmission": {
+      "title": "Forensic Submission",
+      "description": "A formal commitment of forensic evidence to administrative or judicial oversight bodies.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "submission_type": { "type": "string", "enum": ["SUNSET_STRIKE", "FEDERAL_DROP"] },
+        "timestamp": { "type": "number" },
+        "payload_hash": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "COMMITTED", "ACKNOWLEDGED"] },
+        "userId": { "type": "string" }
+      },
+      "required": ["id", "submission_type", "timestamp", "userId"]
+    }
+  },
+  "firestore": {
+    "/audits/{auditId}": {
+      "schema": "AuditSession",
+      "description": "Collection of forensic audit results."
+    },
+    "/healthcare_audits/{auditId}": {
+      "schema": "HealthcareAuditSession",
+      "description": "Collection of braided healthcare audit results."
+    },
+    "/users/{userId}": {
+      "schema": "UserProfile",
+      "description": "Private user profile data."
+    },
+    "/memorial_persons/{personId}": {
+      "schema": "MemorialPerson",
+      "description": "The sovereign anchor for tracking systemic failures."
+    },
+    "/memorial_systems/{systemId}": {
+      "schema": "MemorialSystem",
+      "description": "The machinery that touched the individuals."
+    },
+    "/memorial_events/{eventId}": {
+      "schema": "MemorialEvent",
+      "description": "A touchpoint in the braided failure timeline."
+    },
+    "/memorial_failure_points/{failurePointId}": {
+      "schema": "MemorialFailurePoint",
+      "description": "Explicit codified breaches of statute or policy."
+    },
+    "/memorial_source_documents/{documentId}": {
+      "schema": "MemorialSourceDocument",
+      "description": "The evidentiary spine of the memorial."
+    },
+    "/ghost_files/{ghostId}": {
+      "schema": "GhostFile",
+      "description": "Collection of identified ghost files from ZYLPHA-16 compression."
+    },
+    "/statutory_collisions/{collisionId}": {
+      "schema": "StatutoryCollision",
+      "description": "Collection of statutory collision matrices for federal oversight."
+    },
+    "/federal_nodes/{nodeId}": {
+      "schema": "FederalAuditNode",
+      "description": "Collection of federal audit nodes for planetary mesh cross-referencing."
+    },
+    "/transactions/{eventId}": {
+      "schema": "TransactionEvent",
+      "description": "Immutable event-sourced transaction log."
+    },
+    "/observer_alerts/{alertId}": {
+      "schema": "ObserverAlert",
+      "description": "Real-time alerts from the observer mesh."
+    },
+    "/entangled_nodes/{nodeId}": {
+      "schema": "EntangledNode",
+      "description": "Recovered identity shards from 128:1 hyper-compression diagnostics."
+    },
+    "/forensic_submissions/{submissionId}": {
+      "schema": "ForensicSubmission",
+      "description": "Formal submissions of forensic evidence to state and federal authorities."
+    }
+  }
+}
